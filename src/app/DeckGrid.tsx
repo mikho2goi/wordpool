@@ -21,6 +21,22 @@ export default function DeckGrid({
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  async function renameDeck(deck: Deck) {
+    const name = prompt("Rename deck:", deck.name)?.trim();
+    if (!name || name === deck.name) return;
+    const res = await fetch(`/api/decks/${deck.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Rename failed.");
+      return;
+    }
+    router.refresh();
+  }
+
   async function deleteDeck(deck: Deck) {
     if (
       !confirm(
@@ -68,14 +84,23 @@ export default function DeckGrid({
           </Link>
 
           {isAdmin && (
-            <button
-              onClick={() => deleteDeck(deck)}
-              disabled={deletingId === deck.id}
-              aria-label={`Delete deck ${deck.name}`}
-              className="absolute right-3 top-3 rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 opacity-80 transition hover:bg-red-100 hover:opacity-100 disabled:opacity-50"
-            >
-              {deletingId === deck.id ? "…" : "✕"}
-            </button>
+            <div className="absolute right-3 top-3 flex gap-1.5">
+              <button
+                onClick={() => renameDeck(deck)}
+                aria-label={`Rename deck ${deck.name}`}
+                className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 opacity-80 transition hover:bg-slate-200 hover:opacity-100"
+              >
+                ✎
+              </button>
+              <button
+                onClick={() => deleteDeck(deck)}
+                disabled={deletingId === deck.id}
+                aria-label={`Delete deck ${deck.name}`}
+                className="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 opacity-80 transition hover:bg-red-100 hover:opacity-100 disabled:opacity-50"
+              >
+                {deletingId === deck.id ? "…" : "✕"}
+              </button>
+            </div>
           )}
         </li>
       ))}
