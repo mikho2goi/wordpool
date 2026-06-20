@@ -23,6 +23,7 @@ model Card {
   meaning     String
   explanation String?
   authorName  String
+  color       String   @default("#ffffff")
   createdAt   DateTime @default(now())
   deck        Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
   deckId      Int
