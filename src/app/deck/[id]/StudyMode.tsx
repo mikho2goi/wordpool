@@ -15,6 +15,26 @@ type Card = {
   lang: string;
 };
 
+type Result = { card: Card; your: string; ok: boolean };
+
+// lenient compare: case/space/punctuation-insensitive
+function normalize(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[.,!?;:'"()]/g, "");
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export default function StudyMode({
   cards: initialCards,
   isAdmin,
@@ -33,14 +53,21 @@ export default function StudyMode({
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selectedOnly, setSelectedOnly] = useState(false);
 
-  // the cards currently being studied (all, or just the chosen subset)
+  // test/quiz mode
+  const [testing, setTesting] = useState(false);
+  const [quiz, setQuiz] = useState<Card[]>([]);
+  const [qIndex, setQIndex] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [checked, setChecked] = useState(false);
+  const [results, setResults] = useState<Result[]>([]);
+
   const studyCards =
     selectedOnly && selectedIds.size > 0
       ? cards.filter((c) => selectedIds.has(c.id))
       : cards;
 
   const total = studyCards.length;
-  const ci = total > 0 ? ((index % total) + total) % total : 0; // safe index
+  const ci = total > 0 ? ((index % total) + total) % total : 0;
 
   const next = useCallback(() => {
     setRevealed(false);
@@ -54,6 +81,7 @@ export default function StudyMode({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (testing) return; // arrows/space disabled during a test
       if (e.key === " ") {
         e.preventDefault();
         setRevealed((r) => !r);
@@ -62,7 +90,7 @@ export default function StudyMode({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [next, prev]);
+  }, [next, prev, testing]);
 
   function toggleSelect(id: number) {
     setSelectedIds((prevSet) => {
@@ -81,6 +109,29 @@ export default function StudyMode({
     }
   }
 
+  function startTest() {
+    setQuiz(shuffle(studyCards));
+    setQIndex(0);
+    setAnswer("");
+    setChecked(false);
+    setResults([]);
+    setTesting(true);
+  }
+
+  function checkAnswer() {
+    if (checked) return;
+    const q = quiz[qIndex];
+    const ok = normalize(answer) !== "" && normalize(answer) === normalize(q.word);
+    setResults((r) => [...r, { card: q, your: answer, ok }]);
+    setChecked(true);
+  }
+
+  function nextQuestion() {
+    setChecked(false);
+    setAnswer("");
+    setQIndex((i) => i + 1);
+  }
+
   if (cards.length === 0) {
     return (
       <p className="text-center text-slate-500">
@@ -90,12 +141,157 @@ export default function StudyMode({
   }
 
   if (total === 0) {
-    // selectedOnly with an empty selection — shouldn't happen, but stay safe
+    return <p className="text-center text-slate-500">No words selected.</p>;
+  }
+
+  // ---------- TEST MODE ----------
+  if (testing) {
+    const done = qIndex >= quiz.length;
+
+    if (done) {
+      const score = results.filter((r) => r.ok).length;
+      const wrong = results.filter((r) => !r.ok);
+      const pct = Math.round((score / quiz.length) * 100);
+      return (
+        <div className="flex w-full max-w-md flex-col items-center gap-5">
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-sm text-slate-400">Your score</p>
+            <p className="text-5xl font-extrabold tracking-tight text-slate-900">
+              {score}/{quiz.length}
+            </p>
+            <p
+              className={`text-sm font-semibold ${
+                pct >= 80
+                  ? "text-green-600"
+                  : pct >= 50
+                    ? "text-amber-600"
+                    : "text-red-600"
+              }`}
+            >
+              {pct}% {pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "📚"}
+            </p>
+          </div>
+
+          {wrong.length > 0 && (
+            <div className="w-full">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+                Review ({wrong.length})
+              </p>
+              <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white/80">
+                {wrong.map((r, i) => (
+                  <li key={i} className="px-4 py-2.5 text-sm">
+                    <span className="font-semibold text-slate-800">
+                      {r.card.word}
+                    </span>{" "}
+                    <span className="text-slate-400">— {r.card.meaning}</span>
+                    <div className="text-xs text-red-500">
+                      you wrote: {r.your || "—"}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex w-full gap-3">
+            <button
+              onClick={startTest}
+              className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => setTesting(false)}
+              className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
+            >
+              Back to study
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const q = quiz[qIndex];
+    const lastResult = results[results.length - 1];
     return (
-      <p className="text-center text-slate-500">No words selected.</p>
+      <div className="flex w-full max-w-md flex-col items-center gap-5">
+        <div className="flex w-full items-center gap-3">
+          <span className="shrink-0 text-xs font-medium text-slate-400">
+            {qIndex + 1} / {quiz.length}
+          </span>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+            <div
+              className="h-full rounded-full bg-indigo-500 transition-all"
+              style={{ width: `${(qIndex / quiz.length) * 100}%` }}
+            />
+          </div>
+          <button
+            onClick={() => setTesting(false)}
+            className="shrink-0 text-xs text-slate-400 hover:text-slate-700"
+          >
+            quit
+          </button>
+        </div>
+
+        <div className="flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <span className="text-xs uppercase tracking-wide text-slate-400">
+            Type the word that means
+          </span>
+          <span className="text-2xl font-bold break-words text-slate-900">
+            {q.meaning}
+          </span>
+          {q.explanation && (
+            <span className="text-xs text-slate-400">{q.explanation}</span>
+          )}
+        </div>
+
+        <input
+          autoFocus
+          value={answer}
+          disabled={checked}
+          onChange={(e) => setAnswer(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (checked) nextQuestion();
+              else checkAnswer();
+            }
+          }}
+          placeholder="your answer…"
+          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-center text-lg outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50"
+        />
+
+        {checked && lastResult && (
+          <div
+            className={`w-full rounded-xl px-4 py-2.5 text-center text-sm font-semibold ${
+              lastResult.ok
+                ? "bg-green-50 text-green-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            {lastResult.ok ? "✓ Correct!" : `✗ Answer: ${q.word}`}
+          </div>
+        )}
+
+        {!checked ? (
+          <button
+            onClick={checkAnswer}
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
+          >
+            Check
+          </button>
+        ) : (
+          <button
+            onClick={nextQuestion}
+            className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 active:scale-95"
+          >
+            {qIndex + 1 >= quiz.length ? "See result" : "Next →"}
+          </button>
+        )}
+      </div>
     );
   }
 
+  // ---------- STUDY MODE ----------
   const card = studyCards[ci];
   const fg = readableText(card.color);
 
@@ -196,6 +392,14 @@ export default function StudyMode({
           Next →
         </button>
       </div>
+
+      {/* test the current set */}
+      <button
+        onClick={startTest}
+        className="w-full max-w-md rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 active:scale-95"
+      >
+        📝 Test memory ({total} {total === 1 ? "word" : "words"})
+      </button>
 
       <p className="hidden text-center text-xs text-slate-400 sm:block">
         Tip: <kbd className="rounded bg-slate-200 px-1">space</kbd> to flip,{" "}
