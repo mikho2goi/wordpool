@@ -20,6 +20,7 @@ export default function AddPage() {
   const [authorName, setAuthorName] = useState("");
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
+  const [ipa, setIpa] = useState("");
   const [explanation, setExplanation] = useState("");
   const [color, setColor] = useState<string>(DEFAULT_CARD_COLOR);
   const [lang, setLang] = useState<string>(DEFAULT_LANG);
@@ -90,6 +91,7 @@ export default function AddPage() {
         deckName,
         word,
         meaning,
+        ipa,
         explanation,
         authorName,
         color,
@@ -106,6 +108,7 @@ export default function AddPage() {
     setDone(true);
     setWord("");
     setMeaning("");
+    setIpa("");
     setExplanation("");
     router.refresh();
   }
@@ -205,6 +208,19 @@ export default function AddPage() {
           </div>
 
           <Field label={t("meaning")} value={meaning} onChange={setMeaning} />
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              {t("ipa")}{" "}
+              <span className="font-normal text-slate-400">{t("optional")}</span>
+            </label>
+            <input
+              value={ipa}
+              onChange={(e) => setIpa(e.target.value)}
+              placeholder={t("ipaHint")}
+              className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
 
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-slate-700">
@@ -310,6 +326,7 @@ export default function AddPage() {
             <span className="text-2xl font-bold break-words sm:text-3xl">
               {word || "word"}
             </span>
+            {ipa && <span className="mt-1 text-sm opacity-60">{ipa}</span>}
             <span className="mt-2 text-sm opacity-75 break-words">
               {meaning || "meaning"}
             </span>

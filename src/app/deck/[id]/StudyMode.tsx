@@ -12,6 +12,7 @@ type Card = {
   word: string;
   meaning: string;
   explanation: string | null;
+  ipa: string | null;
   authorName: string;
   color: string;
   lang: string;
@@ -422,9 +423,14 @@ export default function StudyMode({
         className="animate-pop flex min-h-64 w-full max-w-md flex-col items-center justify-center rounded-3xl border border-black/5 p-8 text-center shadow-lg transition active:scale-[0.99] sm:min-h-72"
       >
         {!revealed ? (
-          <span className="text-3xl font-bold break-words sm:text-4xl">
-            {card.word}
-          </span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-3xl font-bold break-words sm:text-4xl">
+              {card.word}
+            </span>
+            {card.ipa && (
+              <span className="text-base opacity-60">{card.ipa}</span>
+            )}
+          </div>
         ) : (
           <div className="space-y-3">
             <p className="text-2xl font-semibold break-words sm:text-3xl">

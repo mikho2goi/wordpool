@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { deckName, word, meaning, explanation, authorName, color, lang } =
+  const { deckName, word, meaning, explanation, ipa, authorName, color, lang } =
     (body ?? {}) as Record<string, unknown>;
 
   // basic validation — required fields + length limits (cheap spam guard)
@@ -67,6 +67,10 @@ export async function POST(req: Request) {
       explanation:
         typeof explanation === "string" && explanation.trim().length > 0
           ? explanation.trim()
+          : null,
+      ipa:
+        typeof ipa === "string" && ipa.trim().length > 0
+          ? ipa.trim().slice(0, 100)
           : null,
       authorName: (authorName as string).trim(),
       color: colorClean,
