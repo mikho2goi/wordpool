@@ -159,6 +159,54 @@ export default function StudyMode({
         <kbd className="rounded bg-slate-200 px-1">←</kbd>{" "}
         <kbd className="rounded bg-slate-200 px-1">→</kbd> to navigate
       </p>
+
+      {/* word list — scan and jump straight to any word */}
+      <div className="w-full max-w-md">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+          All words ({cards.length})
+        </p>
+        <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto rounded-2xl border border-slate-200 bg-white/80">
+          {cards.map((c, i) => (
+            <li key={c.id}>
+              <div
+                className={`flex items-center gap-3 px-4 py-2.5 transition ${
+                  i === index ? "bg-indigo-50" : "hover:bg-slate-50"
+                }`}
+              >
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full ring-1 ring-slate-200"
+                  style={{ backgroundColor: c.color }}
+                />
+                <button
+                  onClick={() => {
+                    setRevealed(false);
+                    setIndex(i);
+                  }}
+                  className="flex min-w-0 flex-1 flex-col text-left"
+                >
+                  <span
+                    className={`truncate text-sm font-semibold ${
+                      i === index ? "text-indigo-700" : "text-slate-800"
+                    }`}
+                  >
+                    {c.word}
+                  </span>
+                  <span className="truncate text-xs text-slate-400">
+                    {c.meaning}
+                  </span>
+                </button>
+                <button
+                  onClick={() => speakText(c.word, c.lang)}
+                  aria-label={`Speak ${c.word}`}
+                  className="shrink-0 rounded-md px-2 py-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                >
+                  🔊
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
