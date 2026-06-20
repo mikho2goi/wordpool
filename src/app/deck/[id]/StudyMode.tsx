@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { readableText } from "@/lib/colors";
 import { speakText } from "@/lib/speak";
@@ -39,9 +40,17 @@ function shuffle<T>(arr: T[]): T[] {
 export default function StudyMode({
   cards: initialCards,
   isAdmin,
+  deckId,
+  isLoggedIn,
+  initialSelected,
+  autoTest,
 }: {
   cards: Card[];
   isAdmin: boolean;
+  deckId: number;
+  isLoggedIn: boolean;
+  initialSelected?: number[];
+  autoTest?: boolean;
 }) {
   const router = useRouter();
   const { t } = useLang();
@@ -77,15 +86,35 @@ export default function StudyMode({
       ? cards.filter((c) => selectedIds.has(c.id))
       : studyCards;
 
-  const next = useCallback(() => {
-    setRevealed(false);
-    setIndex((i) => i + 1);
-  }, []);
+  // history of visited indices so Prev can walk back through the random jumps
+  const [history, setHistory] = useState<number[]>([]);
 
-  const prev = useCallback(() => {
+  function pickRandom(): number {
+    if (total <= 1) return ci;
+    let j = ci;
+    while (j === ci) j = Math.floor(Math.random() * total);
+    return j;
+  }
+
+  function goNext() {
     setRevealed(false);
-    setIndex((i) => i - 1);
-  }, []);
+    setHistory((h) => [...h, ci]);
+    setIndex(pickRandom());
+  }
+
+  function goPrev() {
+    setRevealed(false);
+    if (history.length === 0) {
+      setIndex((i) => i - 1);
+      return;
+    }
+    setIndex(history[history.length - 1]);
+    setHistory((h) => h.slice(0, -1));
+  }
+
+  // keep latest handlers in a ref so the keyboard listener stays current
+  const navRef = useRef({ next: goNext, prev: goPrev });
+  navRef.current = { next: goNext, prev: goPrev };
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -93,12 +122,12 @@ export default function StudyMode({
       if (e.key === " ") {
         e.preventDefault();
         setRevealed((r) => !r);
-      } else if (e.key === "ArrowRight") next();
-      else if (e.key === "ArrowLeft") prev();
+      } else if (e.key === "ArrowRight") navRef.current.next();
+      else if (e.key === "ArrowLeft") navRef.current.prev();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [next, prev, testing]);
+  }, [testing]);
 
   function toggleSelect(id: number) {
     setSelectedIds((prevSet) => {
@@ -124,6 +153,37 @@ export default function StudyMode({
     setChecked(false);
     setResults([]);
     setTesting(true);
+  }
+
+  // if opened from a saved test, preselect those words and start the quiz
+  useEffect(() => {
+    if (!autoTest || !initialSelected?.length) return;
+    const set = new Set(initialSelected);
+    const subset = initialCards.filter((c) => set.has(c.id));
+    if (subset.length === 0) return;
+    setSelectedIds(set);
+    setSelectedOnly(true);
+    setQuiz(shuffle(subset));
+    setQIndex(0);
+    setAnswer("");
+    setChecked(false);
+    setResults([]);
+    setTesting(true);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function saveTestIds(ids: number[]) {
+    if (ids.length === 0) return;
+    const name = prompt(t("saveTestPrompt"), "");
+    if (!name || !name.trim()) return;
+    const res = await fetch("/api/tests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim(), deckId, cardIds: ids }),
+    });
+    if (res.ok) alert(t("savedOk"));
+    else alert((await res.json().catch(() => ({}))).error ?? "Error");
   }
 
   function checkAnswer() {
@@ -215,6 +275,22 @@ export default function StudyMode({
               {t("backToStudy")}
             </button>
           </div>
+
+          {isLoggedIn ? (
+            <button
+              onClick={() => saveTestIds(quiz.map((c) => c.id))}
+              className="w-full rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+            >
+              {t("saveTest")} ({quiz.length})
+            </button>
+          ) : (
+            <Link
+              href="/account"
+              className="text-xs text-slate-400 underline hover:text-slate-700"
+            >
+              {t("signInToSave")}
+            </Link>
+          )}
         </div>
       );
     }
@@ -364,42 +440,54 @@ export default function StudyMode({
         </span>
       </button>
 
-      <div className="flex items-center gap-3 text-xs text-slate-400">
-        <button
-          onClick={() =>
-            speakText(revealed ? card.meaning : card.word, card.lang)
-          }
-          aria-label="Speak"
-          className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 font-semibold text-slate-600 transition hover:bg-slate-200"
-        >
-          {t("speak")}
-        </button>
-        <span>
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2 text-xs">
+          <button
+            onClick={() =>
+              speakText(revealed ? card.meaning : card.word, card.lang)
+            }
+            aria-label="Speak"
+            className="flex items-center gap-1 rounded-md bg-slate-100 px-3 py-1.5 font-semibold text-slate-600 transition hover:bg-slate-200"
+          >
+            {t("speak")}
+          </button>
+          <button
+            onClick={() => toggleSelect(card.id)}
+            className={`rounded-md px-3 py-1.5 font-semibold transition ${
+              selectedIds.has(card.id)
+                ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {selectedIds.has(card.id) ? t("inTest") : t("addToTest")}
+          </button>
+          {isAdmin && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-md bg-red-50 px-3 py-1.5 font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+            >
+              {deleting ? t("deleting") : t("delete")}
+            </button>
+          )}
+        </div>
+        <span className="text-xs text-slate-400">
           {t("addedBy")} {card.authorName}
         </span>
-        {isAdmin && (
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="rounded-md bg-red-50 px-2 py-1 font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-          >
-            {deleting ? t("deleting") : t("delete")}
-          </button>
-        )}
       </div>
 
       <div className="flex w-full max-w-md gap-3">
         <button
-          onClick={prev}
+          onClick={goPrev}
           className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
         >
           {t("prev")}
         </button>
         <button
-          onClick={next}
+          onClick={goNext}
           className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
         >
-          {t("next")}
+          🎲 {t("next")}
         </button>
       </div>
 
@@ -411,6 +499,24 @@ export default function StudyMode({
         {selectedIds.size > 0 ? t("testPicked") : t("testMemory")} (
         {testSet.length} {testSet.length === 1 ? t("word") : t("words")})
       </button>
+
+      {/* save the picked set as a reusable test (logged-in users) */}
+      {isLoggedIn && selectedIds.size > 0 && (
+        <button
+          onClick={() => saveTestIds([...selectedIds])}
+          className="w-full max-w-md rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+        >
+          {t("saveTest")} ({selectedIds.size})
+        </button>
+      )}
+      {!isLoggedIn && selectedIds.size > 0 && (
+        <Link
+          href="/account"
+          className="text-xs text-slate-400 underline hover:text-slate-700"
+        >
+          {t("signInToSave")}
+        </Link>
+      )}
 
       <p className="hidden text-center text-xs text-slate-400 sm:block">
         {t("tip")}
@@ -435,10 +541,10 @@ export default function StudyMode({
                   setIndex(0);
                   setRevealed(false);
                 }}
-                className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
                   selectedOnly
-                    ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                    ? "border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-500"
+                    : "border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
                 }`}
               >
                 {selectedOnly
@@ -452,7 +558,7 @@ export default function StudyMode({
                   setSelectedIds(new Set());
                   setSelectedOnly(false);
                 }}
-                className="rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition hover:text-slate-700"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
               >
                 {t("clear")}
               </button>

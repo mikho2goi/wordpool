@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import TopNav from "@/app/TopNav";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -37,12 +38,15 @@ export default function AccountPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col px-4 py-12 sm:py-20">
-      <Link
-        href="/"
-        className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
-      >
-        ← Quay lại
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
+        >
+          ← Quay lại
+        </Link>
+        <TopNav />
+      </div>
 
       <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
         {mode === "login" ? "Chào mừng trở lại" : "Tạo tài khoản"}

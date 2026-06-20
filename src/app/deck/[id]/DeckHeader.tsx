@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useLang, LangToggle } from "@/lib/i18n";
+import { useLang } from "@/lib/i18n";
+import TopNav from "@/app/TopNav";
 
 export function DeckHeader({
   deckName,
@@ -20,8 +21,8 @@ export function DeckHeader({
         >
           {t("allDecks")}
         </Link>
-        <div className="flex items-center gap-2">
-          <LangToggle />
+        <div className="flex items-center gap-3">
+          <TopNav />
           <Link
             href="/add"
             className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 active:scale-95"

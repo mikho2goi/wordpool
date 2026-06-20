@@ -7,6 +7,7 @@ import { CARD_COLORS, DEFAULT_CARD_COLOR, readableText } from "@/lib/colors";
 import { LANGUAGES, DEFAULT_LANG } from "@/lib/langs";
 import { speakText } from "@/lib/speak";
 import { useLang } from "@/lib/i18n";
+import TopNav from "@/app/TopNav";
 
 type Deck = { id: number; name: string; cardCount: number };
 
@@ -113,12 +114,15 @@ export default function AddPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-      <Link
-        href="/"
-        className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
-      >
-        {t("allDecks")}
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
+        >
+          {t("allDecks")}
+        </Link>
+        <TopNav />
+      </div>
       <h1 className="mt-3 mb-8 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
         {t("addFlashcard")}
       </h1>

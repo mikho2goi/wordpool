@@ -11,9 +11,20 @@ datasource db {
 }
 
 model User {
+  id         Int         @id @default(autoincrement())
+  username   String      @unique
+  passHash   String
+  createdAt  DateTime    @default(now())
+  savedTests SavedTest[]
+}
+
+model SavedTest {
   id        Int      @id @default(autoincrement())
-  username  String   @unique
-  passHash  String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  deckId    Int
+  cardIds   String // JSON array of card ids
   createdAt DateTime @default(now())
 }
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import TopNav from "@/app/TopNav";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,12 +31,15 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-col px-4 py-16 sm:py-24">
-      <Link
-        href="/"
-        className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
-      >
-        ← Back
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
+        >
+          ← Back
+        </Link>
+        <TopNav />
+      </div>
       <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
         Admin login
       </h1>

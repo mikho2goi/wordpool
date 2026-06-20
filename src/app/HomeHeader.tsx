@@ -21,8 +21,16 @@ export default function HomeHeader({
         </h1>
         <p className="mt-2 text-sm text-slate-500 sm:text-base">{t("tagline")}</p>
       </div>
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <LangToggle />
+        {username && (
+          <Link
+            href="/tests"
+            className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
+          >
+            {t("myTests")}
+          </Link>
+        )}
         <UserBar username={username} />
         <AdminBar isAdmin={isAdmin} />
         <Link
