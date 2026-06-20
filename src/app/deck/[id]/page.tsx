@@ -64,7 +64,7 @@ export default async function DeckPage({
           </p>
         </div>
       ) : (
-        <StudyMode cards={deck.cards} isAdmin={admin} deckName={deck.name} />
+        <StudyMode cards={deck.cards} isAdmin={admin} />
       )}
     </main>
   );

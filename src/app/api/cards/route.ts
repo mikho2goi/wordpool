@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_LANG, isValidLang } from "@/lib/langs";
 
 // POST /api/cards — add a card; creates the deck if it doesn't exist yet
 export async function POST(req: Request) {
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { deckName, word, meaning, explanation, authorName, color } =
+  const { deckName, word, meaning, explanation, authorName, color, lang } =
     (body ?? {}) as Record<string, unknown>;
 
   // basic validation — required fields + length limits (cheap spam guard)
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
       ? color
       : "#ffffff";
 
+  const langClean = isValidLang(lang) ? lang : DEFAULT_LANG;
+
   const deckNameClean = (deckName as string).trim();
 
   // find-or-create the deck, then create the card pointing at it
@@ -55,6 +58,7 @@ export async function POST(req: Request) {
           : null,
       authorName: (authorName as string).trim(),
       color: colorClean,
+      lang: langClean,
       deckId: deck.id,
     },
   });

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CARD_COLORS, DEFAULT_CARD_COLOR, readableText } from "@/lib/colors";
+import { LANGUAGES, DEFAULT_LANG } from "@/lib/langs";
+import { speakText } from "@/lib/speak";
 
 type Deck = { id: number; name: string; cardCount: number };
 
@@ -17,6 +19,7 @@ export default function AddPage() {
   const [meaning, setMeaning] = useState("");
   const [explanation, setExplanation] = useState("");
   const [color, setColor] = useState<string>(DEFAULT_CARD_COLOR);
+  const [lang, setLang] = useState<string>(DEFAULT_LANG);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -49,6 +52,7 @@ export default function AddPage() {
         explanation,
         authorName,
         color,
+        lang,
       }),
     });
     setSubmitting(false);
@@ -150,6 +154,42 @@ export default function AddPage() {
                 />
               ))}
             </div>
+          </div>
+
+          {/* voice / language */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              Pronunciation voice
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value)}
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  const ok = speakText(word.trim() || "Hello", lang);
+                  if (!ok)
+                    setError(
+                      "No voice for that language is installed on this device — it used a fallback."
+                    );
+                }}
+                className="shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
+              >
+                🔊 Test
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-400">
+              Speaks the word (or “Hello”) in the chosen voice.
+            </p>
           </div>
 
           {error && (
