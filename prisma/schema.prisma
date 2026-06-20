@@ -1,0 +1,29 @@
+// WordPool schema — community flashcard app
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Deck {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  cards     Card[]
+}
+
+model Card {
+  id          Int      @id @default(autoincrement())
+  word        String
+  meaning     String
+  explanation String?
+  authorName  String
+  createdAt   DateTime @default(now())
+  deck        Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deckId      Int
+}
