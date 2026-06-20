@@ -40,6 +40,7 @@ export async function POST(req: Request) {
   const langClean = isValidLang(lang) ? lang : DEFAULT_LANG;
 
   const deckNameClean = (deckName as string).trim();
+  const wordClean = (word as string).trim();
 
   // find-or-create the deck, then create the card pointing at it
   const deck = await prisma.deck.upsert({
@@ -48,9 +49,20 @@ export async function POST(req: Request) {
     create: { name: deckNameClean },
   });
 
+  // no duplicate words within the same deck (case-insensitive)
+  const dup = await prisma.card.findFirst({
+    where: { deckId: deck.id, word: { equals: wordClean, mode: "insensitive" } },
+  });
+  if (dup) {
+    return NextResponse.json(
+      { error: `"${dup.word}" is already in ${deck.name}.` },
+      { status: 409 }
+    );
+  }
+
   const card = await prisma.card.create({
     data: {
-      word: (word as string).trim(),
+      word: wordClean,
       meaning: (meaning as string).trim(),
       explanation:
         typeof explanation === "string" && explanation.trim().length > 0

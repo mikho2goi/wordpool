@@ -23,6 +23,7 @@ export default function AddPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [deckWords, setDeckWords] = useState<string[]>([]); // existing words in chosen deck
 
   useEffect(() => {
     fetch("/api/decks")
@@ -30,6 +31,41 @@ export default function AddPage() {
       .then(setDecks)
       .catch(() => {});
   }, []);
+
+  // load existing words for the chosen deck (to suggest + block duplicates)
+  useEffect(() => {
+    if (!deckChoice || deckChoice === "__new__") {
+      setDeckWords([]);
+      return;
+    }
+    const deck = decks.find((d) => d.name === deckChoice);
+    if (!deck) return;
+    fetch(`/api/decks/${deck.id}/cards`)
+      .then((r) => r.json())
+      .then((d) =>
+        setDeckWords(
+          Array.isArray(d?.cards)
+            ? d.cards.map((c: { word: string }) => c.word)
+            : []
+        )
+      )
+      .catch(() => setDeckWords([]));
+  }, [deckChoice, decks]);
+
+  const wordTrim = word.trim().toLowerCase();
+  const isDuplicate =
+    wordTrim.length > 0 &&
+    deckWords.some((w) => w.toLowerCase() === wordTrim);
+  const suggestions =
+    wordTrim.length > 0
+      ? deckWords
+          .filter(
+            (w) =>
+              w.toLowerCase().includes(wordTrim) &&
+              w.toLowerCase() !== wordTrim
+          )
+          .slice(0, 6)
+      : [];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +76,8 @@ export default function AddPage() {
     if (!authorName.trim()) return setError("Enter your name.");
     if (!word.trim() || !meaning.trim())
       return setError("Word and meaning are required.");
+    if (isDuplicate)
+      return setError(`"${word.trim()}" is already in this deck.`);
 
     setSubmitting(true);
     const res = await fetch("/api/cards", {
@@ -117,7 +155,47 @@ export default function AddPage() {
           </div>
 
           <Field label="Your name" value={authorName} onChange={setAuthorName} />
-          <Field label="Word" value={word} onChange={setWord} />
+
+          {/* word with existing-word suggestions + duplicate guard */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              Word
+            </label>
+            <input
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition focus:ring-2 ${
+                isDuplicate
+                  ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                  : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-100"
+              }`}
+            />
+            {isDuplicate && (
+              <p className="mt-1 text-xs font-medium text-red-600">
+                Already in this deck — pick a different word.
+              </p>
+            )}
+            {!isDuplicate && suggestions.length > 0 && (
+              <div className="mt-1.5">
+                <p className="mb-1 text-xs text-slate-400">
+                  Already in this deck:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setWord(s)}
+                      className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 transition hover:bg-amber-100"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <Field label="Meaning" value={meaning} onChange={setMeaning} />
 
           <div>
@@ -203,10 +281,10 @@ export default function AddPage() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || isDuplicate}
             className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 active:scale-95 disabled:opacity-50"
           >
-            {submitting ? "Adding…" : "Add card"}
+            {submitting ? "Adding…" : isDuplicate ? "Duplicate word" : "Add card"}
           </button>
         </form>
 
