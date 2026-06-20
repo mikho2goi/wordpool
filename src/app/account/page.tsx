@@ -16,7 +16,7 @@ export default function AccountPage() {
     e.preventDefault();
     setError("");
     if (!username.trim() || !passphrase.trim()) {
-      setError("Enter your name and passphrase.");
+      setError("Nhập tên và cụm từ bí mật của bạn.");
       return;
     }
     setSubmitting(true);
@@ -28,7 +28,7 @@ export default function AccountPage() {
     setSubmitting(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Something went wrong.");
+      setError(data.error ?? "Đã có lỗi xảy ra.");
       return;
     }
     router.push("/");
@@ -41,26 +41,26 @@ export default function AccountPage() {
         href="/"
         className="text-sm font-medium text-slate-500 transition hover:text-slate-900"
       >
-        ← Back
+        ← Quay lại
       </Link>
 
       <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
-        {mode === "login" ? "Welcome back" : "Create your account"}
+        {mode === "login" ? "Chào mừng trở lại" : "Tạo tài khoản"}
       </h1>
       <p className="mt-1 mb-8 text-sm text-slate-500">
-        Sign in with a <strong>passphrase</strong> — a sentence you&apos;ll
-        remember, not a hard password.
+        Đăng nhập bằng một <strong>cụm từ bí mật</strong> — một câu bạn dễ nhớ,
+        không phải mật khẩu phức tạp.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-            Your name
+            Tên của bạn
           </label>
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="e.g. thien"
+            placeholder="ví dụ: thien"
             autoFocus
             className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
@@ -68,17 +68,18 @@ export default function AccountPage() {
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-            Passphrase
+            Cụm từ bí mật
           </label>
           <textarea
             value={passphrase}
             onChange={(e) => setPassphrase(e.target.value)}
             rows={2}
-            placeholder="e.g. mèo ăn cơm buổi sáng — a memorable phrase, not a complex password"
+            placeholder="ví dụ: mèo ăn cơm buổi sáng — một câu dễ nhớ, không phải mật khẩu phức tạp"
             className="w-full resize-none rounded-2xl border border-slate-300 px-4 py-4 text-lg outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
           />
           <p className="mt-1 text-xs text-slate-400">
-            Pick a phrase only you would say. Easy to remember, hard to guess.
+            Chọn một câu chỉ mình bạn nghĩ ra. Dễ nhớ, khó đoán. (ít nhất 8 ký
+            tự)
           </p>
         </div>
 
@@ -94,10 +95,10 @@ export default function AccountPage() {
           className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 active:scale-95 disabled:opacity-50"
         >
           {submitting
-            ? "Please wait…"
+            ? "Vui lòng đợi…"
             : mode === "login"
-              ? "Sign in"
-              : "Create account"}
+              ? "Đăng nhập"
+              : "Tạo tài khoản"}
         </button>
       </form>
 
@@ -109,8 +110,8 @@ export default function AccountPage() {
         className="mt-6 text-center text-sm text-slate-500 transition hover:text-slate-900"
       >
         {mode === "login"
-          ? "New here? Create an account"
-          : "Already have an account? Sign in"}
+          ? "Chưa có tài khoản? Tạo ngay"
+          : "Đã có tài khoản? Đăng nhập"}
       </button>
     </main>
   );

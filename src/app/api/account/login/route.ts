@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   if (!username || !passphrase) {
     return NextResponse.json(
-      { error: "Enter your username and passphrase." },
+      { error: "Nhập tên và cụm từ bí mật." },
       { status: 400 }
     );
   }
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   const ok = user ? await bcrypt.compare(passphrase, user.passHash) : false;
   if (!user || !ok) {
     return NextResponse.json(
-      { error: "Wrong username or passphrase." },
+      { error: "Sai tên hoặc cụm từ bí mật." },
       { status: 401 }
     );
   }

@@ -16,20 +16,20 @@ export async function POST(req: Request) {
 
   if (username.length < 2 || username.length > 40) {
     return NextResponse.json(
-      { error: "Username must be 2–40 characters." },
+      { error: "Tên phải từ 2–40 ký tự." },
       { status: 400 }
     );
   }
   // passphrase: encourage a memorable multi-word phrase, not a short password
   if (passphrase.length < 8) {
     return NextResponse.json(
-      { error: "Passphrase too short — use a memorable phrase (8+ characters)." },
+      { error: "Cụm từ quá ngắn — hãy dùng một câu dễ nhớ (ít nhất 8 ký tự)." },
       { status: 400 }
     );
   }
   if (passphrase.length > 200) {
     return NextResponse.json(
-      { error: "Passphrase too long." },
+      { error: "Cụm từ quá dài." },
       { status: 400 }
     );
   }
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   });
   if (taken) {
     return NextResponse.json(
-      { error: "That username is taken." },
+      { error: "Tên này đã được dùng." },
       { status: 409 }
     );
   }
