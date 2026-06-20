@@ -175,13 +175,7 @@ export default function AddPage() {
               </select>
               <button
                 type="button"
-                onClick={() => {
-                  const ok = speakText(word.trim() || "Hello", lang);
-                  if (!ok)
-                    setError(
-                      "No voice for that language is installed on this device — it used a fallback."
-                    );
-                }}
+                onClick={() => speakText(word.trim() || "Hello", lang)}
                 className="shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
               >
                 🔊 Test
