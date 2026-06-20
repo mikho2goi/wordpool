@@ -22,6 +22,12 @@ export default function DeckGrid({
   const router = useRouter();
   const { t } = useLang();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
+
+  const q = query.trim().toLowerCase();
+  const shown = q
+    ? decks.filter((d) => d.name.toLowerCase().includes(q))
+    : decks;
 
   async function renameDeck(deck: Deck) {
     const name = prompt("Rename deck:", deck.name)?.trim();
@@ -71,8 +77,22 @@ export default function DeckGrid({
   }
 
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {decks.map((deck) => (
+    <div>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t("searchDecks")}
+        className="mb-5 w-full rounded-xl border border-slate-300 bg-white/80 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      />
+
+      {shown.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center text-slate-500">
+          {t("noMatch")}
+        </p>
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((deck) => (
         <li key={deck.id} className="relative">
           <Link
             href={`/deck/${deck.id}`}
@@ -118,8 +138,10 @@ export default function DeckGrid({
               </button>
             </div>
           )}
-        </li>
-      ))}
-    </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

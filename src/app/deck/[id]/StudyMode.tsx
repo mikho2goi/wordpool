@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { readableText } from "@/lib/colors";
+import { readableText, CARD_COLORS } from "@/lib/colors";
+import { LANGUAGES } from "@/lib/langs";
 import { speakText } from "@/lib/speak";
 import { useLang } from "@/lib/i18n";
 
@@ -60,6 +61,19 @@ export default function StudyMode({
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // admin inline edit of the current card
+  const [editing, setEditing] = useState(false);
+  const [edit, setEdit] = useState({
+    word: "",
+    meaning: "",
+    ipa: "",
+    explanation: "",
+    color: "#ffffff",
+    lang: "en-US",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
 
   // user-chosen subset to focus on
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -384,8 +398,175 @@ export default function StudyMode({
     router.refresh();
   }
 
+  function openEdit() {
+    setEditError("");
+    setEdit({
+      word: card.word,
+      meaning: card.meaning,
+      ipa: card.ipa ?? "",
+      explanation: card.explanation ?? "",
+      color: card.color,
+      lang: card.lang,
+    });
+    setEditing(true);
+  }
+
+  async function saveEdit() {
+    if (!edit.word.trim() || !edit.meaning.trim()) {
+      setEditError("Word and meaning are required.");
+      return;
+    }
+    setSavingEdit(true);
+    setEditError("");
+    const res = await fetch(`/api/cards/${card.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(edit),
+    });
+    setSavingEdit(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setEditError(data.error ?? "Save failed.");
+      return;
+    }
+    const updated: Card = await res.json();
+    setCards((cs) => cs.map((c) => (c.id === updated.id ? updated : c)));
+    setEditing(false);
+    setRevealed(false);
+    router.refresh();
+  }
+
   return (
     <div className="flex flex-col items-center gap-6">
+      {editing && isAdmin && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !savingEdit && setEditing(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl"
+          >
+            <h3 className="mb-4 text-lg font-bold text-slate-900">
+              {t("editCard")}
+            </h3>
+
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              {t("wordLabel")}
+            </label>
+            <input
+              value={edit.word}
+              onChange={(e) => setEdit((s) => ({ ...s, word: e.target.value }))}
+              className="mb-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              {t("meaning")}
+            </label>
+            <input
+              value={edit.meaning}
+              onChange={(e) =>
+                setEdit((s) => ({ ...s, meaning: e.target.value }))
+              }
+              className="mb-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              {t("ipa")}{" "}
+              <span className="font-normal text-slate-400">{t("optional")}</span>
+            </label>
+            <input
+              value={edit.ipa}
+              onChange={(e) => setEdit((s) => ({ ...s, ipa: e.target.value }))}
+              placeholder={t("ipaHint")}
+              className="mb-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              {t("explanation")}{" "}
+              <span className="font-normal text-slate-400">{t("optional")}</span>
+            </label>
+            <textarea
+              value={edit.explanation}
+              onChange={(e) =>
+                setEdit((s) => ({ ...s, explanation: e.target.value }))
+              }
+              rows={3}
+              className="mb-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              {t("cardColor")}
+            </label>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {CARD_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setEdit((s) => ({ ...s, color: c }))}
+                  aria-label={`Color ${c}`}
+                  style={{ backgroundColor: c }}
+                  className={`h-8 w-8 rounded-full ring-1 ring-slate-300 transition hover:scale-110 ${
+                    edit.color === c ? "ring-2 ring-indigo-500 ring-offset-2" : ""
+                  }`}
+                />
+              ))}
+            </div>
+
+            <label className="mb-1 block text-sm font-semibold text-slate-700">
+              {t("voice")}
+            </label>
+            <div className="mb-3 flex gap-2">
+              <select
+                value={edit.lang}
+                onChange={(e) =>
+                  setEdit((s) => ({ ...s, lang: e.target.value }))
+                }
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() =>
+                  speakText(edit.word.trim() || "Hello", edit.lang)
+                }
+                className="shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
+              >
+                {t("testVoice")}
+              </button>
+            </div>
+
+            {editError && (
+              <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                {editError}
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditing(false)}
+                disabled={savingEdit}
+                className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={savingEdit}
+                className="flex-1 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+              >
+                {savingEdit ? t("saving") : t("save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex w-full max-w-md items-center gap-3">
         <span className="shrink-0 text-xs font-medium text-slate-400">
           {ci + 1} / {total}
@@ -452,6 +633,14 @@ export default function StudyMode({
           >
             {selectedIds.has(card.id) ? t("inTest") : t("addToTest")}
           </button>
+          {isAdmin && (
+            <button
+              onClick={openEdit}
+              className="rounded-md bg-amber-50 px-3 py-1.5 font-semibold text-amber-700 transition hover:bg-amber-100"
+            >
+              {t("edit")}
+            </button>
+          )}
           {isAdmin && (
             <button
               onClick={handleDelete}

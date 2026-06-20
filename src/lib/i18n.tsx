@@ -96,6 +96,15 @@ const STRINGS = {
     livePreview: "Live preview",
     addedMsg: "Added! Add another, or",
     goToDecks: "go to decks",
+    // edit card (admin)
+    edit: "✎ Edit",
+    editCard: "Edit card",
+    save: "Save",
+    saving: "Saving…",
+    cancel: "Cancel",
+    // search
+    searchDecks: "Search decks…",
+    noMatch: "No decks match your search.",
   },
   vi: {
     addCard: "+ Thêm thẻ",
@@ -176,6 +185,13 @@ const STRINGS = {
     livePreview: "Xem trước",
     addedMsg: "Đã thêm! Thêm tiếp, hoặc",
     goToDecks: "về bộ thẻ",
+    edit: "✎ Sửa",
+    editCard: "Sửa thẻ",
+    save: "Lưu",
+    saving: "Đang lưu…",
+    cancel: "Hủy",
+    searchDecks: "Tìm bộ thẻ…",
+    noMatch: "Không có bộ thẻ nào khớp.",
   },
 } as const;
 
