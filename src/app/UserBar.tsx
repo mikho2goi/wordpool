@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLang } from "@/lib/i18n";
 
 export default function UserBar({ username }: { username: string | null }) {
   const router = useRouter();
+  const { t } = useLang();
   const [busy, setBusy] = useState(false);
 
   if (!username) {
@@ -14,7 +16,7 @@ export default function UserBar({ username }: { username: string | null }) {
         href="/account"
         className="text-xs font-semibold text-slate-500 transition hover:text-slate-900"
       >
-        Sign in
+        {t("signIn")}
       </Link>
     );
   }
@@ -34,7 +36,7 @@ export default function UserBar({ username }: { username: string | null }) {
         disabled={busy}
         className="font-medium text-slate-400 transition hover:text-slate-700 disabled:opacity-50"
       >
-        log out
+        {t("logout")}
       </button>
     </div>
   );

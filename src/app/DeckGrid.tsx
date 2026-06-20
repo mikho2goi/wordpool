@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLang } from "@/lib/i18n";
 
 type Deck = {
   id: number;
@@ -19,6 +20,7 @@ export default function DeckGrid({
   isAdmin: boolean;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   async function renameDeck(deck: Deck) {
@@ -54,6 +56,20 @@ export default function DeckGrid({
     router.refresh();
   }
 
+  if (decks.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-10 text-center">
+        <p className="text-slate-500">
+          {t("noDecks")}{" "}
+          <Link href="/add" className="font-medium text-indigo-600 underline">
+            {t("addFirst")}
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {decks.map((deck) => (
@@ -79,7 +95,7 @@ export default function DeckGrid({
               {deck.name}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {deck.cardCount} {deck.cardCount === 1 ? "card" : "cards"}
+              {deck.cardCount} {deck.cardCount === 1 ? t("word") : t("words")}
             </p>
           </Link>
 

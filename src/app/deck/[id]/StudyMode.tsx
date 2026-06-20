@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { readableText } from "@/lib/colors";
 import { speakText } from "@/lib/speak";
+import { useLang } from "@/lib/i18n";
 
 type Card = {
   id: number;
@@ -43,6 +44,7 @@ export default function StudyMode({
   isAdmin: boolean;
 }) {
   const router = useRouter();
+  const { t } = useLang();
 
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [index, setIndex] = useState(0);
@@ -140,14 +142,14 @@ export default function StudyMode({
 
   if (cards.length === 0) {
     return (
-      <p className="text-center text-slate-500">
-        All cards removed from this deck.
-      </p>
+      <p className="text-center text-slate-500">{t("allRemoved")}</p>
     );
   }
 
   if (total === 0) {
-    return <p className="text-center text-slate-500">No words selected.</p>;
+    return (
+      <p className="text-center text-slate-500">{t("noWordsSelected")}</p>
+    );
   }
 
   // ---------- TEST MODE ----------
@@ -161,7 +163,7 @@ export default function StudyMode({
       return (
         <div className="flex w-full max-w-md flex-col items-center gap-5">
           <div className="flex flex-col items-center gap-1">
-            <p className="text-sm text-slate-400">Your score</p>
+            <p className="text-sm text-slate-400">{t("yourScore")}</p>
             <p className="text-5xl font-extrabold tracking-tight text-slate-900">
               {score}/{quiz.length}
             </p>
@@ -181,7 +183,7 @@ export default function StudyMode({
           {wrong.length > 0 && (
             <div className="w-full">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-                Review ({wrong.length})
+                {t("review")} ({wrong.length})
               </p>
               <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto rounded-2xl border border-slate-200 bg-white/80">
                 {wrong.map((r, i) => (
@@ -191,7 +193,7 @@ export default function StudyMode({
                     </span>{" "}
                     <span className="text-slate-400">— {r.card.meaning}</span>
                     <div className="text-xs text-red-500">
-                      you wrote: {r.your || "—"}
+                      {t("youWrote")} {r.your || "—"}
                     </div>
                   </li>
                 ))}
@@ -204,13 +206,13 @@ export default function StudyMode({
               onClick={startTest}
               className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
             >
-              Retry
+              {t("retry")}
             </button>
             <button
               onClick={() => setTesting(false)}
               className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
             >
-              Back to study
+              {t("backToStudy")}
             </button>
           </div>
         </div>
@@ -235,13 +237,13 @@ export default function StudyMode({
             onClick={() => setTesting(false)}
             className="shrink-0 text-xs text-slate-400 hover:text-slate-700"
           >
-            quit
+            {t("quit")}
           </button>
         </div>
 
         <div className="flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
           <span className="text-xs uppercase tracking-wide text-slate-400">
-            Type the word that means
+            {t("typeWordThatMeans")}
           </span>
           <span className="text-2xl font-bold break-words text-slate-900">
             {q.meaning}
@@ -262,7 +264,7 @@ export default function StudyMode({
               else checkAnswer();
             }
           }}
-          placeholder="your answer…"
+          placeholder={t("yourAnswer")}
           className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-center text-lg outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50"
         />
 
@@ -274,7 +276,7 @@ export default function StudyMode({
                 : "bg-red-50 text-red-700"
             }`}
           >
-            {lastResult.ok ? "✓ Correct!" : `✗ Answer: ${q.word}`}
+            {lastResult.ok ? t("correct") : `${t("answerIs")} ${q.word}`}
           </div>
         )}
 
@@ -283,14 +285,14 @@ export default function StudyMode({
             onClick={checkAnswer}
             className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
           >
-            Check
+            {t("check")}
           </button>
         ) : (
           <button
             onClick={nextQuestion}
             className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 active:scale-95"
           >
-            {qIndex + 1 >= quiz.length ? "See result" : "Next →"}
+            {qIndex + 1 >= quiz.length ? t("seeResult") : t("next")}
           </button>
         )}
       </div>
@@ -358,7 +360,7 @@ export default function StudyMode({
           </div>
         )}
         <span className="mt-6 text-xs uppercase tracking-wide opacity-50">
-          {revealed ? "tap to hide" : "tap to reveal"}
+          {revealed ? t("tapHide") : t("tapReveal")}
         </span>
       </button>
 
@@ -370,16 +372,18 @@ export default function StudyMode({
           aria-label="Speak"
           className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 font-semibold text-slate-600 transition hover:bg-slate-200"
         >
-          🔊 speak
+          {t("speak")}
         </button>
-        <span>added by {card.authorName}</span>
+        <span>
+          {t("addedBy")} {card.authorName}
+        </span>
         {isAdmin && (
           <button
             onClick={handleDelete}
             disabled={deleting}
             className="rounded-md bg-red-50 px-2 py-1 font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
           >
-            {deleting ? "deleting…" : "Delete"}
+            {deleting ? t("deleting") : t("delete")}
           </button>
         )}
       </div>
@@ -389,13 +393,13 @@ export default function StudyMode({
           onClick={prev}
           className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
         >
-          ← Prev
+          {t("prev")}
         </button>
         <button
           onClick={next}
           className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
         >
-          Next →
+          {t("next")}
         </button>
       </div>
 
@@ -404,24 +408,22 @@ export default function StudyMode({
         onClick={startTest}
         className="w-full max-w-md rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 active:scale-95"
       >
-        📝 Test {selectedIds.size > 0 ? "picked" : "memory"} ({testSet.length}{" "}
-        {testSet.length === 1 ? "word" : "words"})
+        {selectedIds.size > 0 ? t("testPicked") : t("testMemory")} (
+        {testSet.length} {testSet.length === 1 ? t("word") : t("words")})
       </button>
 
       <p className="hidden text-center text-xs text-slate-400 sm:block">
-        Tip: <kbd className="rounded bg-slate-200 px-1">space</kbd> to flip,{" "}
-        <kbd className="rounded bg-slate-200 px-1">←</kbd>{" "}
-        <kbd className="rounded bg-slate-200 px-1">→</kbd> to navigate
+        {t("tip")}
       </p>
 
       {/* word list — pick the words to learn, or jump to any one */}
       <div className="w-full max-w-md">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            All words ({cards.length})
+            {t("allWords")} ({cards.length})
             {selectedIds.size > 0 && (
               <span className="ml-1 text-indigo-500">
-                · {selectedIds.size} picked
+                · {selectedIds.size} {t("picked")}
               </span>
             )}
           </p>
@@ -440,8 +442,8 @@ export default function StudyMode({
                 }`}
               >
                 {selectedOnly
-                  ? "Studying picked ✓"
-                  : `Study picked (${selectedIds.size})`}
+                  ? t("studyingPicked")
+                  : `${t("studyPicked")} (${selectedIds.size})`}
               </button>
             )}
             {selectedIds.size > 0 && (
@@ -452,7 +454,7 @@ export default function StudyMode({
                 }}
                 className="rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition hover:text-slate-700"
               >
-                clear
+                {t("clear")}
               </button>
             )}
           </div>
