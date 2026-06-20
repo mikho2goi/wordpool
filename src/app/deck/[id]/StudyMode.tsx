@@ -87,35 +87,15 @@ export default function StudyMode({
       ? cards.filter((c) => selectedIds.has(c.id))
       : studyCards;
 
-  // history of visited indices so Prev can walk back through the random jumps
-  const [history, setHistory] = useState<number[]>([]);
-
-  function pickRandom(): number {
-    if (total <= 1) return ci;
-    // avoid the current card, and (when there are enough cards) the one shown
-    // just before it — so random Next doesn't bounce back to the previous word
-    const prev = history.length ? history[history.length - 1] : -1;
-    let j = ci;
-    while (j === ci || (total > 2 && j === prev)) {
-      j = Math.floor(Math.random() * total);
-    }
-    return j;
-  }
-
+  // walk the deck in order so Next never re-shows a word already seen
   function goNext() {
     setRevealed(false);
-    setHistory((h) => [...h, ci]);
-    setIndex(pickRandom());
+    setIndex((i) => i + 1);
   }
 
   function goPrev() {
     setRevealed(false);
-    if (history.length === 0) {
-      setIndex((i) => i - 1);
-      return;
-    }
-    setIndex(history[history.length - 1]);
-    setHistory((h) => h.slice(0, -1));
+    setIndex((i) => i - 1);
   }
 
   // keep latest handlers in a ref so the keyboard listener stays current
@@ -498,7 +478,7 @@ export default function StudyMode({
           onClick={goNext}
           className="flex-1 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 active:scale-95"
         >
-          🎲 {t("next")}
+          {t("next")}
         </button>
       </div>
 
