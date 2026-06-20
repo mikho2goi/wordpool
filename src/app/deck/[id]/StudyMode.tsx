@@ -29,15 +29,28 @@ export default function StudyMode({
   const [revealed, setRevealed] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // user-chosen subset to focus on
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedOnly, setSelectedOnly] = useState(false);
+
+  // the cards currently being studied (all, or just the chosen subset)
+  const studyCards =
+    selectedOnly && selectedIds.size > 0
+      ? cards.filter((c) => selectedIds.has(c.id))
+      : cards;
+
+  const total = studyCards.length;
+  const ci = total > 0 ? ((index % total) + total) % total : 0; // safe index
+
   const next = useCallback(() => {
     setRevealed(false);
-    setIndex((i) => (i + 1) % cards.length);
-  }, [cards.length]);
+    setIndex((i) => i + 1);
+  }, []);
 
   const prev = useCallback(() => {
     setRevealed(false);
-    setIndex((i) => (i - 1 + cards.length) % cards.length);
-  }, [cards.length]);
+    setIndex((i) => i - 1);
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -51,6 +64,23 @@ export default function StudyMode({
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
 
+  function toggleSelect(id: number) {
+    setSelectedIds((prevSet) => {
+      const s = new Set(prevSet);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  }
+
+  function jumpTo(id: number) {
+    const j = studyCards.findIndex((c) => c.id === id);
+    if (j >= 0) {
+      setRevealed(false);
+      setIndex(j);
+    }
+  }
+
   if (cards.length === 0) {
     return (
       <p className="text-center text-slate-500">
@@ -59,7 +89,14 @@ export default function StudyMode({
     );
   }
 
-  const card = cards[index];
+  if (total === 0) {
+    // selectedOnly with an empty selection — shouldn't happen, but stay safe
+    return (
+      <p className="text-center text-slate-500">No words selected.</p>
+    );
+  }
+
+  const card = studyCards[ci];
   const fg = readableText(card.color);
 
   async function handleDelete() {
@@ -71,23 +108,29 @@ export default function StudyMode({
       alert("Delete failed (are you still logged in?).");
       return;
     }
-    const remaining = cards.filter((c) => c.id !== card.id);
-    setCards(remaining);
+    setCards((cs) => cs.filter((c) => c.id !== card.id));
+    setSelectedIds((s) => {
+      const n = new Set(s);
+      n.delete(card.id);
+      return n;
+    });
     setRevealed(false);
-    setIndex((i) => (remaining.length === 0 ? 0 : i % remaining.length));
-    router.refresh(); // keep deck counts fresh
+    router.refresh();
   }
 
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="flex w-full max-w-md items-center gap-3">
         <span className="shrink-0 text-xs font-medium text-slate-400">
-          {index + 1} / {cards.length}
+          {ci + 1} / {total}
+          {selectedOnly && selectedIds.size > 0 && (
+            <span className="ml-1 text-indigo-500">(selected)</span>
+          )}
         </span>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
           <div
             className="h-full rounded-full bg-indigo-500 transition-all"
-            style={{ width: `${((index + 1) / cards.length) * 100}%` }}
+            style={{ width: `${((ci + 1) / total) * 100}%` }}
           />
         </div>
       </div>
@@ -160,51 +203,98 @@ export default function StudyMode({
         <kbd className="rounded bg-slate-200 px-1">→</kbd> to navigate
       </p>
 
-      {/* word list — scan and jump straight to any word */}
+      {/* word list — pick the words to learn, or jump to any one */}
       <div className="w-full max-w-md">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-          All words ({cards.length})
-        </p>
-        <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto rounded-2xl border border-slate-200 bg-white/80">
-          {cards.map((c, i) => (
-            <li key={c.id}>
-              <div
-                className={`flex items-center gap-3 px-4 py-2.5 transition ${
-                  i === index ? "bg-indigo-50" : "hover:bg-slate-50"
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            All words ({cards.length})
+            {selectedIds.size > 0 && (
+              <span className="ml-1 text-indigo-500">
+                · {selectedIds.size} picked
+              </span>
+            )}
+          </p>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => {
+                  setSelectedOnly((v) => !v);
+                  setIndex(0);
+                  setRevealed(false);
+                }}
+                className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                  selectedOnly
+                    ? "bg-indigo-600 text-white hover:bg-indigo-500"
+                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
                 }`}
               >
-                <span
-                  className="h-3 w-3 shrink-0 rounded-full ring-1 ring-slate-200"
-                  style={{ backgroundColor: c.color }}
-                />
-                <button
-                  onClick={() => {
-                    setRevealed(false);
-                    setIndex(i);
-                  }}
-                  className="flex min-w-0 flex-1 flex-col text-left"
+                {selectedOnly
+                  ? "Studying picked ✓"
+                  : `Study picked (${selectedIds.size})`}
+              </button>
+            )}
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => {
+                  setSelectedIds(new Set());
+                  setSelectedOnly(false);
+                }}
+                className="rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition hover:text-slate-700"
+              >
+                clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto rounded-2xl border border-slate-200 bg-white/80">
+          {cards.map((c) => {
+            const isCurrent = c.id === card.id;
+            const picked = selectedIds.has(c.id);
+            return (
+              <li key={c.id}>
+                <div
+                  className={`flex items-center gap-3 px-3 py-2.5 transition ${
+                    isCurrent ? "bg-indigo-50" : "hover:bg-slate-50"
+                  }`}
                 >
+                  <input
+                    type="checkbox"
+                    checked={picked}
+                    onChange={() => toggleSelect(c.id)}
+                    aria-label={`Pick ${c.word}`}
+                    className="h-4 w-4 shrink-0 cursor-pointer accent-indigo-600"
+                  />
                   <span
-                    className={`truncate text-sm font-semibold ${
-                      i === index ? "text-indigo-700" : "text-slate-800"
-                    }`}
+                    className="h-3 w-3 shrink-0 rounded-full ring-1 ring-slate-200"
+                    style={{ backgroundColor: c.color }}
+                  />
+                  <button
+                    onClick={() => jumpTo(c.id)}
+                    className="flex min-w-0 flex-1 flex-col text-left"
                   >
-                    {c.word}
-                  </span>
-                  <span className="truncate text-xs text-slate-400">
-                    {c.meaning}
-                  </span>
-                </button>
-                <button
-                  onClick={() => speakText(c.word, c.lang)}
-                  aria-label={`Speak ${c.word}`}
-                  className="shrink-0 rounded-md px-2 py-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                >
-                  🔊
-                </button>
-              </div>
-            </li>
-          ))}
+                    <span
+                      className={`truncate text-sm font-semibold ${
+                        isCurrent ? "text-indigo-700" : "text-slate-800"
+                      }`}
+                    >
+                      {c.word}
+                    </span>
+                    <span className="truncate text-xs text-slate-400">
+                      {c.meaning}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => speakText(c.word, c.lang)}
+                    aria-label={`Speak ${c.word}`}
+                    className="shrink-0 rounded-md px-2 py-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                  >
+                    🔊
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
