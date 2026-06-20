@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/auth";
 import AdminBar from "./AdminBar";
+import DeckGrid from "./DeckGrid";
 
 export const dynamic = "force-dynamic"; // always show freshest decks
 
@@ -50,37 +51,15 @@ export default async function Home() {
           </p>
         </div>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {decks.map((deck) => (
-            <li key={deck.id}>
-              <Link
-                href={`/deck/${deck.id}`}
-                className="group block h-full rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
-              >
-                <div className="mb-4 flex gap-1.5">
-                  {deck.cards.length === 0 ? (
-                    <span className="h-2.5 w-2.5 rounded-full bg-slate-200" />
-                  ) : (
-                    deck.cards.map((c, i) => (
-                      <span
-                        key={i}
-                        className="h-2.5 w-2.5 rounded-full ring-1 ring-slate-200"
-                        style={{ backgroundColor: c.color }}
-                      />
-                    ))
-                  )}
-                </div>
-                <h2 className="text-lg font-semibold text-slate-900 group-hover:text-indigo-600">
-                  {deck.name}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {deck._count.cards}{" "}
-                  {deck._count.cards === 1 ? "card" : "cards"}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <DeckGrid
+          isAdmin={admin}
+          decks={decks.map((deck) => ({
+            id: deck.id,
+            name: deck.name,
+            cardCount: deck._count.cards,
+            colors: deck.cards.map((c) => c.color),
+          }))}
+        />
       )}
     </main>
   );

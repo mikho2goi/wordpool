@@ -13,14 +13,43 @@ type Card = {
   color: string;
 };
 
+// best-effort: map a deck name to a speech language code for better pronunciation
+function guessLang(deckName: string): string {
+  const n = deckName.toLowerCase();
+  if (n.includes("spanish") || n.includes("español")) return "es-ES";
+  if (n.includes("french") || n.includes("français")) return "fr-FR";
+  if (n.includes("german") || n.includes("deutsch")) return "de-DE";
+  if (n.includes("italian")) return "it-IT";
+  if (n.includes("japanese") || n.includes("日本")) return "ja-JP";
+  if (n.includes("chinese") || n.includes("mandarin")) return "zh-CN";
+  if (n.includes("korean")) return "ko-KR";
+  if (n.includes("portuguese")) return "pt-PT";
+  return "en-US";
+}
+
 export default function StudyMode({
   cards: initialCards,
   isAdmin,
+  deckName,
 }: {
   cards: Card[];
   isAdmin: boolean;
+  deckName: string;
 }) {
   const router = useRouter();
+  const lang = guessLang(deckName);
+
+  function speak(text: string) {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      alert("Speech not supported in this browser.");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    window.speechSynthesis.speak(u);
+  }
+
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -115,6 +144,13 @@ export default function StudyMode({
       </button>
 
       <div className="flex items-center gap-3 text-xs text-slate-400">
+        <button
+          onClick={() => speak(revealed ? card.meaning : card.word)}
+          aria-label="Speak"
+          className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 font-semibold text-slate-600 transition hover:bg-slate-200"
+        >
+          🔊 speak
+        </button>
         <span>added by {card.authorName}</span>
         {isAdmin && (
           <button
