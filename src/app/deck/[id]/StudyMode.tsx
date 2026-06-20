@@ -69,6 +69,12 @@ export default function StudyMode({
   const total = studyCards.length;
   const ci = total > 0 ? ((index % total) + total) % total : 0;
 
+  // the test targets the picked words if any are picked, else the whole study set
+  const testSet =
+    selectedIds.size > 0
+      ? cards.filter((c) => selectedIds.has(c.id))
+      : studyCards;
+
   const next = useCallback(() => {
     setRevealed(false);
     setIndex((i) => i + 1);
@@ -110,7 +116,7 @@ export default function StudyMode({
   }
 
   function startTest() {
-    setQuiz(shuffle(studyCards));
+    setQuiz(shuffle(testSet));
     setQIndex(0);
     setAnswer("");
     setChecked(false);
@@ -398,7 +404,8 @@ export default function StudyMode({
         onClick={startTest}
         className="w-full max-w-md rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 active:scale-95"
       >
-        📝 Test memory ({total} {total === 1 ? "word" : "words"})
+        📝 Test {selectedIds.size > 0 ? "picked" : "memory"} ({testSet.length}{" "}
+        {testSet.length === 1 ? "word" : "words"})
       </button>
 
       <p className="hidden text-center text-xs text-slate-400 sm:block">
