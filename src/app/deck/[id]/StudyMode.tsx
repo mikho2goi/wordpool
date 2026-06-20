@@ -183,7 +183,7 @@ export default function StudyMode({
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
                 Review ({wrong.length})
               </p>
-              <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white/80">
+              <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto rounded-2xl border border-slate-200 bg-white/80">
                 {wrong.map((r, i) => (
                   <li key={i} className="px-4 py-2.5 text-sm">
                     <span className="font-semibold text-slate-800">
