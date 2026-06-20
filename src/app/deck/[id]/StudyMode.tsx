@@ -24,6 +24,8 @@ function guessLang(deckName: string): string {
   if (n.includes("chinese") || n.includes("mandarin")) return "zh-CN";
   if (n.includes("korean")) return "ko-KR";
   if (n.includes("portuguese")) return "pt-PT";
+  if (n.includes("vietnam") || n.includes("việt")) return "vi-VN";
+  if (n.includes("english")) return "en-US";
   return "en-US";
 }
 
@@ -39,6 +41,28 @@ export default function StudyMode({
   const router = useRouter();
   const lang = guessLang(deckName);
 
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  // voice list loads asynchronously in most browsers
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const load = () => setVoices(window.speechSynthesis.getVoices());
+    load();
+    window.speechSynthesis.addEventListener("voiceschanged", load);
+    return () =>
+      window.speechSynthesis.removeEventListener("voiceschanged", load);
+  }, []);
+
+  function pickVoice(target: string): SpeechSynthesisVoice | undefined {
+    const prefix = target.slice(0, 2).toLowerCase(); // "es", "en", ...
+    // exact lang match first, then same language prefix, then any English
+    return (
+      voices.find((v) => v.lang.toLowerCase() === target.toLowerCase()) ??
+      voices.find((v) => v.lang.toLowerCase().startsWith(prefix)) ??
+      voices.find((v) => v.lang.toLowerCase().startsWith("en"))
+    );
+  }
+
   function speak(text: string) {
     if (typeof window === "undefined" || !window.speechSynthesis) {
       alert("Speech not supported in this browser.");
@@ -46,7 +70,9 @@ export default function StudyMode({
     }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang;
+    const voice = pickVoice(lang);
+    if (voice) u.voice = voice; // force a real voice so OS default (e.g. Vietnamese) isn't used
+    u.lang = voice?.lang ?? lang;
     window.speechSynthesis.speak(u);
   }
 
