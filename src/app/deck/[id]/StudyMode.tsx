@@ -92,8 +92,13 @@ export default function StudyMode({
 
   function pickRandom(): number {
     if (total <= 1) return ci;
+    // avoid the current card, and (when there are enough cards) the one shown
+    // just before it — so random Next doesn't bounce back to the previous word
+    const prev = history.length ? history[history.length - 1] : -1;
     let j = ci;
-    while (j === ci) j = Math.floor(Math.random() * total);
+    while (j === ci || (total > 2 && j === prev)) {
+      j = Math.floor(Math.random() * total);
+    }
     return j;
   }
 
