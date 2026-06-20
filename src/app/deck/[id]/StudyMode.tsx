@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { readableText } from "@/lib/colors";
 
 type Card = {
@@ -12,12 +13,18 @@ type Card = {
   color: string;
 };
 
-export default function StudyMode({ cards }: { cards: Card[] }) {
+export default function StudyMode({
+  cards: initialCards,
+  isAdmin,
+}: {
+  cards: Card[];
+  isAdmin: boolean;
+}) {
+  const router = useRouter();
+  const [cards, setCards] = useState<Card[]>(initialCards);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
-
-  const card = cards[index];
-  const fg = readableText(card.color);
+  const [deleting, setDeleting] = useState(false);
 
   const next = useCallback(() => {
     setRevealed(false);
@@ -29,7 +36,6 @@ export default function StudyMode({ cards }: { cards: Card[] }) {
     setIndex((i) => (i - 1 + cards.length) % cards.length);
   }, [cards.length]);
 
-  // keyboard: space flips, arrows navigate
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === " ") {
@@ -42,9 +48,35 @@ export default function StudyMode({ cards }: { cards: Card[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
 
+  if (cards.length === 0) {
+    return (
+      <p className="text-center text-slate-500">
+        All cards removed from this deck.
+      </p>
+    );
+  }
+
+  const card = cards[index];
+  const fg = readableText(card.color);
+
+  async function handleDelete() {
+    if (!confirm(`Delete "${card.word}"? This can't be undone.`)) return;
+    setDeleting(true);
+    const res = await fetch(`/api/cards/${card.id}`, { method: "DELETE" });
+    setDeleting(false);
+    if (!res.ok) {
+      alert("Delete failed (are you still logged in?).");
+      return;
+    }
+    const remaining = cards.filter((c) => c.id !== card.id);
+    setCards(remaining);
+    setRevealed(false);
+    setIndex((i) => (remaining.length === 0 ? 0 : i % remaining.length));
+    router.refresh(); // keep deck counts fresh
+  }
+
   return (
     <div className="flex flex-col items-center gap-6">
-      {/* progress */}
       <div className="flex w-full max-w-md items-center gap-3">
         <span className="shrink-0 text-xs font-medium text-slate-400">
           {index + 1} / {cards.length}
@@ -57,7 +89,6 @@ export default function StudyMode({ cards }: { cards: Card[] }) {
         </div>
       </div>
 
-      {/* the card */}
       <button
         key={card.id + (revealed ? "-b" : "-f")}
         onClick={() => setRevealed((r) => !r)}
@@ -83,9 +114,19 @@ export default function StudyMode({ cards }: { cards: Card[] }) {
         </span>
       </button>
 
-      <p className="text-xs text-slate-400">added by {card.authorName}</p>
+      <div className="flex items-center gap-3 text-xs text-slate-400">
+        <span>added by {card.authorName}</span>
+        {isAdmin && (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-md bg-red-50 px-2 py-1 font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+          >
+            {deleting ? "deleting…" : "Delete"}
+          </button>
+        )}
+      </div>
 
-      {/* controls */}
       <div className="flex w-full max-w-md gap-3">
         <button
           onClick={prev}

@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth";
+import AdminBar from "./AdminBar";
 
 export const dynamic = "force-dynamic"; // always show freshest decks
 
 export default async function Home() {
-  const decks = await prisma.deck.findMany({
-    orderBy: { name: "asc" },
-    include: {
-      _count: { select: { cards: true } },
-      cards: { select: { color: true }, take: 4 },
-    },
-  });
+  const [decks, admin] = await Promise.all([
+    prisma.deck.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        _count: { select: { cards: true } },
+        cards: { select: { color: true }, take: 4 },
+      },
+    }),
+    isAdmin(),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
@@ -23,12 +28,15 @@ export default async function Home() {
             A shared deck of flashcards. Anyone can add a word — everyone studies it.
           </p>
         </div>
-        <Link
-          href="/add"
-          className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 active:scale-95"
-        >
-          + Add card
-        </Link>
+        <div className="flex items-center gap-4">
+          <AdminBar isAdmin={admin} />
+          <Link
+            href="/add"
+            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 active:scale-95"
+          >
+            + Add card
+          </Link>
+        </div>
       </header>
 
       {decks.length === 0 ? (

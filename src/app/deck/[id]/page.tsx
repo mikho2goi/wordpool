@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/auth";
 import StudyMode from "./StudyMode";
+import AdminBar from "@/app/AdminBar";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +16,13 @@ export default async function DeckPage({
   const deckId = Number(id);
   if (!Number.isInteger(deckId)) notFound();
 
-  const deck = await prisma.deck.findUnique({
-    where: { id: deckId },
-    include: { cards: { orderBy: { createdAt: "desc" } } },
-  });
+  const [deck, admin] = await Promise.all([
+    prisma.deck.findUnique({
+      where: { id: deckId },
+      include: { cards: { orderBy: { createdAt: "desc" } } },
+    }),
+    isAdmin(),
+  ]);
 
   if (!deck) notFound();
 
@@ -30,12 +35,15 @@ export default async function DeckPage({
         >
           ← All decks
         </Link>
-        <Link
-          href="/add"
-          className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 active:scale-95"
-        >
-          + Add card
-        </Link>
+        <div className="flex items-center gap-3">
+          <AdminBar isAdmin={admin} />
+          <Link
+            href="/add"
+            className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 active:scale-95"
+          >
+            + Add card
+          </Link>
+        </div>
       </div>
 
       <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
@@ -56,7 +64,7 @@ export default async function DeckPage({
           </p>
         </div>
       ) : (
-        <StudyMode cards={deck.cards} />
+        <StudyMode cards={deck.cards} isAdmin={admin} />
       )}
     </main>
   );
