@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/userAuth";
 import AdminBar from "./AdminBar";
+import UserBar from "./UserBar";
 import DeckGrid from "./DeckGrid";
 
 export const dynamic = "force-dynamic"; // always show freshest decks
 
 export default async function Home() {
-  const [decks, admin] = await Promise.all([
+  const [decks, admin, user] = await Promise.all([
     prisma.deck.findMany({
       orderBy: { name: "asc" },
       include: {
@@ -16,6 +18,7 @@ export default async function Home() {
       },
     }),
     isAdmin(),
+    getCurrentUser(),
   ]);
 
   return (
@@ -30,6 +33,7 @@ export default async function Home() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <UserBar username={user?.username ?? null} />
           <AdminBar isAdmin={admin} />
           <Link
             href="/add"
