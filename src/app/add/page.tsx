@@ -7,6 +7,7 @@ import { CARD_COLORS, DEFAULT_CARD_COLOR, readableText } from "@/lib/colors";
 import { LANGUAGES, DEFAULT_LANG } from "@/lib/langs";
 import { speakText } from "@/lib/speak";
 import { useLang } from "@/lib/i18n";
+import { MAX_DECK_NAME, LEVEL_OPTIONS, langLabel } from "@/lib/deckMeta";
 import TopNav from "@/app/TopNav";
 
 type Deck = { id: number; name: string; cardCount: number };
@@ -17,6 +18,9 @@ export default function AddPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [deckChoice, setDeckChoice] = useState(""); // existing deck name, or "__new__"
   const [newDeck, setNewDeck] = useState("");
+  const [newDeckLevel, setNewDeckLevel] = useState(""); // level for a new deck
+  const [newDeckSource, setNewDeckSource] = useState("en-US"); // From (word) language
+  const [newDeckTarget, setNewDeckTarget] = useState("vi-VN"); // To language
   const [authorName, setAuthorName] = useState("");
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
@@ -96,6 +100,12 @@ export default function AddPage() {
         authorName,
         color,
         lang,
+        level:
+          deckChoice === "__new__" && newDeckLevel ? newDeckLevel : undefined,
+        sourceLang:
+          deckChoice === "__new__" ? newDeckSource : undefined,
+        targetLang:
+          deckChoice === "__new__" ? newDeckTarget : undefined,
       }),
     });
     setSubmitting(false);
@@ -154,12 +164,59 @@ export default function AddPage() {
               <option value="__new__">{t("newDeckOption")}</option>
             </select>
             {deckChoice === "__new__" && (
-              <input
-                value={newDeck}
-                onChange={(e) => setNewDeck(e.target.value)}
-                placeholder={t("newDeckName")}
-                className="mt-2 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              />
+              <>
+                <input
+                  value={newDeck}
+                  onChange={(e) => setNewDeck(e.target.value)}
+                  placeholder={t("newDeckName")}
+                  maxLength={MAX_DECK_NAME}
+                  className="mt-2 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+                <select
+                  value={newDeckLevel}
+                  onChange={(e) => setNewDeckLevel(e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                >
+                  <option value="">{t("levelNone")}</option>
+                  {LEVEL_OPTIONS.map((lv) => (
+                    <option key={lv} value={lv}>
+                      {lv}
+                    </option>
+                  ))}
+                </select>
+                <label className="mt-2 block text-xs font-semibold text-slate-500">
+                  {t("fromLangLabel")}
+                </label>
+                <select
+                  value={newDeckSource}
+                  onChange={(e) => setNewDeckSource(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <label className="mt-2 block text-xs font-semibold text-slate-500">
+                  {t("toLangLabel")}
+                </label>
+                <select
+                  value={newDeckTarget}
+                  onChange={(e) => setNewDeckTarget(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs font-medium text-slate-500">
+                  {langLabel(newDeckSource) ?? "?"} →{" "}
+                  {langLabel(newDeckTarget) ?? "?"}
+                </p>
+              </>
             )}
           </div>
 

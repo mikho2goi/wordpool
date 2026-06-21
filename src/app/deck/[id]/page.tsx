@@ -48,7 +48,13 @@ export default async function DeckPage({
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-      <DeckHeader deckName={deck.name} count={deck.cards.length} />
+      <DeckHeader
+        deckName={deck.name}
+        count={deck.cards.length}
+        fromLang={deck.sourceLang ?? deck.cards[0]?.lang ?? null}
+        level={deck.level}
+        targetLang={deck.targetLang}
+      />
       {deck.cards.length === 0 ? (
         <EmptyDeck />
       ) : (

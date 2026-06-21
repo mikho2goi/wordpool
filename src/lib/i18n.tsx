@@ -18,6 +18,7 @@ const STRINGS = {
     logout: "log out",
     admin: "Admin",
     adminBadge: "admin",
+    exitAdmin: "exit admin",
     back: "← Back",
     allDecks: "← All decks",
     // home
@@ -118,6 +119,12 @@ const STRINGS = {
     pleaseWait: "Please wait…",
     noAccountCreate: "No account? Create one",
     haveAccountSignIn: "Have an account? Sign in",
+    // deck edit
+    deckNameLabel: "Deck name",
+    levelLabel: "Level",
+    levelNone: "— no level —",
+    fromLangLabel: "Word language (From)",
+    toLangLabel: "Meaning language (To)",
   },
   vi: {
     addCard: "+ Thêm thẻ",
@@ -125,6 +132,7 @@ const STRINGS = {
     logout: "đăng xuất",
     admin: "Quản trị",
     adminBadge: "quản trị",
+    exitAdmin: "thoát quản trị",
     back: "← Quay lại",
     allDecks: "← Tất cả bộ thẻ",
     tagline: "Bộ thẻ học chung. Ai cũng có thể thêm từ — mọi người cùng học.",
@@ -217,6 +225,11 @@ const STRINGS = {
     pleaseWait: "Vui lòng đợi…",
     noAccountCreate: "Chưa có tài khoản? Tạo ngay",
     haveAccountSignIn: "Đã có tài khoản? Đăng nhập",
+    deckNameLabel: "Tên bộ thẻ",
+    levelLabel: "Cấp độ",
+    levelNone: "— không có cấp độ —",
+    fromLangLabel: "Ngôn ngữ từ (Từ)",
+    toLangLabel: "Ngôn ngữ nghĩa (Đến)",
   },
 } as const;
 
@@ -258,7 +271,7 @@ export function LangToggle() {
     <button
       onClick={() => setLang(lang === "en" ? "vi" : "en")}
       aria-label="Toggle language"
-      className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+      className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md active:scale-95"
     >
       {lang === "en" ? "🇻🇳 VI" : "🇬🇧 EN"}
     </button>

@@ -12,6 +12,9 @@ export async function GET() {
     decks.map((d) => ({
       id: d.id,
       name: d.name,
+      level: d.level,
+      sourceLang: d.sourceLang,
+      targetLang: d.targetLang,
       cardCount: d._count.cards,
     }))
   );

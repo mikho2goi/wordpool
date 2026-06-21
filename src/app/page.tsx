@@ -12,7 +12,7 @@ export default async function Home() {
       orderBy: { name: "asc" },
       include: {
         _count: { select: { cards: true } },
-        cards: { select: { color: true }, take: 4 },
+        cards: { select: { color: true, lang: true }, take: 4 },
       },
     }),
     isAdmin(),
@@ -27,8 +27,11 @@ export default async function Home() {
         decks={decks.map((deck) => ({
           id: deck.id,
           name: deck.name,
+          level: deck.level,
+          targetLang: deck.targetLang,
           cardCount: deck._count.cards,
           colors: deck.cards.map((c) => c.color),
+          fromLang: deck.sourceLang ?? deck.cards[0]?.lang ?? null,
         }))}
       />
     </main>

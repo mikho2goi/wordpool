@@ -29,10 +29,13 @@ model SavedTest {
 }
 
 model Deck {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  cards     Card[]
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  level      String? // null | "Basic" | "Intermediate" | "Advanced"
+  sourceLang String? // word language code, e.g. "en-US" (the "From")
+  targetLang String? // meaning language code, e.g. "vi-VN"; null => Vietnamese
+  createdAt  DateTime @default(now())
+  cards      Card[]
 }
 
 model Card {

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_LANG, isValidLang } from "@/lib/langs";
+import { MAX_DECK_NAME, isValidLevel } from "@/lib/deckMeta";
+
+const DEFAULT_TARGET_LANG = "vi-VN";
 
 // POST /api/cards — add a card; creates the deck if it doesn't exist yet
 export async function POST(req: Request) {
@@ -11,8 +14,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { deckName, word, meaning, explanation, ipa, authorName, color, lang } =
-    (body ?? {}) as Record<string, unknown>;
+  const {
+    deckName,
+    word,
+    meaning,
+    explanation,
+    ipa,
+    authorName,
+    color,
+    lang,
+    level,
+    sourceLang,
+    targetLang,
+  } = (body ?? {}) as Record<string, unknown>;
 
   // basic validation — required fields + length limits (cheap spam guard)
   const required = { deckName, word, meaning, authorName };
@@ -40,13 +54,33 @@ export async function POST(req: Request) {
   const langClean = isValidLang(lang) ? lang : DEFAULT_LANG;
 
   const deckNameClean = (deckName as string).trim();
+  if (deckNameClean.length > MAX_DECK_NAME) {
+    return NextResponse.json(
+      { error: `Deck name too long (max ${MAX_DECK_NAME} characters).` },
+      { status: 400 }
+    );
+  }
   const wordClean = (word as string).trim();
+
+  // level + languages only apply when this call creates a new deck
+  const levelClean = isValidLevel(level) ? level : null;
+  const sourceClean = isValidLang(sourceLang)
+    ? sourceLang
+    : isValidLang(lang)
+      ? lang
+      : DEFAULT_LANG;
+  const targetClean = isValidLang(targetLang) ? targetLang : DEFAULT_TARGET_LANG;
 
   // find-or-create the deck, then create the card pointing at it
   const deck = await prisma.deck.upsert({
     where: { name: deckNameClean },
     update: {},
-    create: { name: deckNameClean },
+    create: {
+      name: deckNameClean,
+      level: levelClean,
+      sourceLang: sourceClean,
+      targetLang: targetClean,
+    },
   });
 
   // no duplicate words within the same deck (case-insensitive)
