@@ -86,6 +86,8 @@ export default function StudyMode({
   const [answer, setAnswer] = useState("");
   const [checked, setChecked] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
+  // true when this quiz was launched from an already-saved test (retake)
+  const [isRetake, setIsRetake] = useState(false);
 
   const studyCards =
     selectedOnly && selectedIds.size > 0
@@ -146,12 +148,13 @@ export default function StudyMode({
     }
   }
 
-  function startTest() {
+  function startTest(retake = false) {
     setQuiz(shuffle(testSet));
     setQIndex(0);
     setAnswer("");
     setChecked(false);
     setResults([]);
+    setIsRetake(retake);
     setTesting(true);
   }
 
@@ -168,6 +171,7 @@ export default function StudyMode({
     setAnswer("");
     setChecked(false);
     setResults([]);
+    setIsRetake(true);
     setTesting(true);
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,7 +225,7 @@ export default function StudyMode({
       const wrong = results.filter((r) => !r.ok);
       const pct = Math.round((score / quiz.length) * 100);
       return (
-        <div className="flex w-full max-w-md flex-col items-center gap-5">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-5">
           <div className="flex flex-col items-center gap-1">
             <p className="text-sm text-slate-400">{t("yourScore")}</p>
             <p className="text-5xl font-extrabold tracking-tight text-slate-900">
@@ -263,7 +267,7 @@ export default function StudyMode({
 
           <div className="flex w-full gap-3">
             <button
-              onClick={startTest}
+              onClick={() => startTest(isRetake)}
               className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
             >
               {t("retry")}
@@ -276,21 +280,22 @@ export default function StudyMode({
             </button>
           </div>
 
-          {isLoggedIn ? (
-            <button
-              onClick={() => saveTestIds(quiz.map((c) => c.id))}
-              className="w-full rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
-            >
-              {t("saveTest")} ({quiz.length})
-            </button>
-          ) : (
-            <Link
-              href="/account"
-              className="text-xs text-slate-400 underline hover:text-slate-700"
-            >
-              {t("signInToSave")}
-            </Link>
-          )}
+          {!isRetake &&
+            (isLoggedIn ? (
+              <button
+                onClick={() => saveTestIds(quiz.map((c) => c.id))}
+                className="w-full rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+              >
+                {t("saveTest")} ({quiz.length})
+              </button>
+            ) : (
+              <Link
+                href="/account"
+                className="text-xs text-slate-400 underline hover:text-slate-700"
+              >
+                {t("signInToSave")}
+              </Link>
+            ))}
         </div>
       );
     }
@@ -298,7 +303,7 @@ export default function StudyMode({
     const q = quiz[qIndex];
     const lastResult = results[results.length - 1];
     return (
-      <div className="flex w-full max-w-md flex-col items-center gap-5">
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-5">
         <div className="flex w-full items-center gap-3">
           <span className="shrink-0 text-xs font-medium text-slate-400">
             {qIndex + 1} / {quiz.length}
@@ -311,7 +316,7 @@ export default function StudyMode({
           </div>
           <button
             onClick={() => setTesting(false)}
-            className="shrink-0 text-xs text-slate-400 hover:text-slate-700"
+            className="shrink-0 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-bold text-red-600 transition hover:bg-red-50 active:scale-95"
           >
             {t("quit")}
           </button>
@@ -673,7 +678,7 @@ export default function StudyMode({
 
       {/* test the current set */}
       <button
-        onClick={startTest}
+        onClick={() => startTest()}
         className="w-full max-w-md rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:opacity-90 active:scale-95"
       >
         {selectedIds.size > 0 ? t("testPicked") : t("testMemory")} (
