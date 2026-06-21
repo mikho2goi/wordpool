@@ -105,6 +105,19 @@ const STRINGS = {
     // search
     searchDecks: "Search decks…",
     noMatch: "No decks match your search.",
+    // account
+    welcomeBack: "Welcome back",
+    createAccount: "Create account",
+    accountIntro: "Sign in with a secret passphrase — a sentence you can remember, not a complex password.",
+    namePlaceholder: "e.g. alex",
+    passphraseLabel: "Secret passphrase",
+    passphrasePlaceholder: "e.g. the cat eats rice in the morning — a memorable phrase, not a complex password",
+    passphraseHint: "Pick a sentence only you would think of. Easy to remember, hard to guess. (at least 8 characters)",
+    enterNameAndPass: "Enter your name and passphrase.",
+    somethingWrong: "Something went wrong.",
+    pleaseWait: "Please wait…",
+    noAccountCreate: "No account? Create one",
+    haveAccountSignIn: "Have an account? Sign in",
   },
   vi: {
     addCard: "+ Thêm thẻ",
@@ -192,6 +205,18 @@ const STRINGS = {
     cancel: "Hủy",
     searchDecks: "Tìm bộ thẻ…",
     noMatch: "Không có bộ thẻ nào khớp.",
+    welcomeBack: "Chào mừng trở lại",
+    createAccount: "Tạo tài khoản",
+    accountIntro: "Đăng nhập bằng một cụm từ bí mật — một câu bạn dễ nhớ, không phải mật khẩu phức tạp.",
+    namePlaceholder: "ví dụ: thien",
+    passphraseLabel: "Cụm từ bí mật",
+    passphrasePlaceholder: "ví dụ: mèo ăn cơm buổi sáng — một câu dễ nhớ, không phải mật khẩu phức tạp",
+    passphraseHint: "Chọn một câu chỉ mình bạn nghĩ ra. Dễ nhớ, khó đoán. (ít nhất 8 ký tự)",
+    enterNameAndPass: "Nhập tên và cụm từ bí mật của bạn.",
+    somethingWrong: "Đã có lỗi xảy ra.",
+    pleaseWait: "Vui lòng đợi…",
+    noAccountCreate: "Chưa có tài khoản? Tạo ngay",
+    haveAccountSignIn: "Đã có tài khoản? Đăng nhập",
   },
 } as const;
 
