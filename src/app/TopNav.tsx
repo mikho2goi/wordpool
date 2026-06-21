@@ -18,16 +18,17 @@ export default function TopNav() {
   }, []);
 
   return (
-    <div className="flex items-center gap-3">
+    <nav className="flex items-center gap-2">
       {loggedIn && (
         <Link
           href="/tests"
-          className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
+          className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50/80 px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-100 hover:shadow-md active:scale-95"
         >
+          <span aria-hidden>📝</span>
           {t("myTests")}
         </Link>
       )}
       <LangToggle />
-    </div>
+    </nav>
   );
 }

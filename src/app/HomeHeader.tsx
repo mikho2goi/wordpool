@@ -26,8 +26,9 @@ export default function HomeHeader({
         {username && (
           <Link
             href="/tests"
-            className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
+            className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50/80 px-3 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-100 hover:shadow-md active:scale-95"
           >
+            <span aria-hidden>📝</span>
             {t("myTests")}
           </Link>
         )}
@@ -35,7 +36,7 @@ export default function HomeHeader({
         <AdminBar isAdmin={isAdmin} />
         <Link
           href="/add"
-          className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 active:scale-95"
+          className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md active:scale-95"
         >
           {t("addCard")}
         </Link>

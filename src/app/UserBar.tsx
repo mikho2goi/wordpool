@@ -14,8 +14,9 @@ export default function UserBar({ username }: { username: string | null }) {
     return (
       <Link
         href="/account"
-        className="text-xs font-semibold text-slate-500 transition hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md active:scale-95"
       >
+        <span aria-hidden>👤</span>
         {t("signIn")}
       </Link>
     );
@@ -29,12 +30,15 @@ export default function UserBar({ username }: { username: string | null }) {
   }
 
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="font-semibold text-slate-700">{username}</span>
+    <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 py-1 pl-3 pr-1 text-xs shadow-sm backdrop-blur">
+      <span className="flex items-center gap-1 font-semibold text-slate-700">
+        <span aria-hidden>👤</span>
+        {username}
+      </span>
       <button
         onClick={logout}
         disabled={busy}
-        className="font-medium text-slate-400 transition hover:text-slate-700 disabled:opacity-50"
+        className="rounded-full px-2 py-1 font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
       >
         {t("logout")}
       </button>
