@@ -11,11 +11,18 @@ datasource db {
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  username   String      @unique
-  passHash   String
-  createdAt  DateTime    @default(now())
-  savedTests SavedTest[]
+  id           Int         @id @default(autoincrement())
+  username     String      @unique
+  passHash     String
+  tokenVersion Int         @default(0) // bump to revoke all of this user's JWTs
+  createdAt    DateTime    @default(now())
+  savedTests   SavedTest[]
+}
+
+// One row per day; total visits = sum of all counts. Cheap upsert-increment.
+model DailyView {
+  day   String @id // "YYYY-MM-DD" in Asia/Ho_Chi_Minh
+  count Int    @default(0)
 }
 
 model SavedTest {

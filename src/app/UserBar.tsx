@@ -29,6 +29,13 @@ export default function UserBar({ username }: { username: string | null }) {
     router.refresh();
   }
 
+  async function logoutAll() {
+    setBusy(true);
+    await fetch("/api/account/logout-all", { method: "POST" });
+    setBusy(false);
+    router.refresh();
+  }
+
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 py-1 pl-3 pr-1 text-xs shadow-sm backdrop-blur">
       <span className="flex items-center gap-1 font-semibold text-slate-700">
@@ -41,6 +48,14 @@ export default function UserBar({ username }: { username: string | null }) {
         className="rounded-full px-2 py-1 font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
       >
         {t("logout")}
+      </button>
+      <button
+        onClick={logoutAll}
+        disabled={busy}
+        title={t("logoutAllHint")}
+        className="rounded-full px-2 py-1 font-medium text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+      >
+        {t("logoutAll")}
       </button>
     </div>
   );

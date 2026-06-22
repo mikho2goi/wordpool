@@ -30,10 +30,13 @@ export default function AdminBar({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50/80 py-1 pl-3 pr-1 text-xs shadow-sm backdrop-blur">
-      <span className="flex items-center gap-1 font-semibold text-green-700">
+      <Link
+        href="/admin"
+        className="flex items-center gap-1 font-semibold text-green-700 transition hover:text-green-900"
+      >
         <span aria-hidden>🛡️</span>
         {t("adminBadge")}
-      </span>
+      </Link>
       <button
         onClick={logout}
         disabled={busy}

@@ -1,39 +1,13 @@
 import { cookies } from "next/headers";
-import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { signUserToken, verifyUserToken, USER_TOKEN_TTL_S } from "@/lib/jwt";
 
 export const USER_COOKIE = "user_session";
+export const USER_COOKIE_MAX_AGE = USER_TOKEN_TTL_S;
 
-function secret(): string {
-  return process.env.ADMIN_SECRET ?? "dev-insecure-secret";
-}
-
-// session token = "<userId>.<hmac(userId)>" — tamper-proof without a DB session table
-export function signSession(userId: number): string {
-  const sig = crypto
-    .createHmac("sha256", secret())
-    .update(String(userId))
-    .digest("hex");
-  return `${userId}.${sig}`;
-}
-
-function verifySession(token: string): number | null {
-  const dot = token.lastIndexOf(".");
-  if (dot < 0) return null;
-  const idPart = token.slice(0, dot);
-  const sig = token.slice(dot + 1);
-  const expected = crypto
-    .createHmac("sha256", secret())
-    .update(idPart)
-    .digest("hex");
-  if (
-    sig.length !== expected.length ||
-    !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
-  ) {
-    return null;
-  }
-  const id = Number(idPart);
-  return Number.isInteger(id) ? id : null;
+// session token is now a JWT (sub=userId, ver=tokenVersion, exp=7d)
+export async function signSession(userId: number, ver: number): Promise<string> {
+  return signUserToken(userId, ver);
 }
 
 export async function getCurrentUser(): Promise<{
@@ -43,11 +17,16 @@ export async function getCurrentUser(): Promise<{
   const store = await cookies();
   const token = store.get(USER_COOKIE)?.value;
   if (!token) return null;
-  const id = verifySession(token);
-  if (id === null) return null;
+
+  const claims = await verifyUserToken(token);
+  if (!claims) return null; // bad sig or expired
+
   const user = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, username: true },
+    where: { id: claims.userId },
+    select: { id: true, username: true, tokenVersion: true },
   });
-  return user ?? null;
+  if (!user) return null;
+  if (user.tokenVersion !== claims.ver) return null; // revoked (logged out everywhere)
+
+  return { id: user.id, username: user.username };
 }

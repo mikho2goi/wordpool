@@ -44,3 +44,6 @@ next-env.d.ts
 
 # local-only learning doc
 WORDPOOL_GUIDE.md
+
+# stale local sqlite (Postgres now)
+dev.db

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { USER_COOKIE, signSession } from "@/lib/userAuth";
+import { USER_COOKIE, USER_COOKIE_MAX_AGE, signSession } from "@/lib/userAuth";
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as {
@@ -47,16 +47,16 @@ export async function POST(req: Request) {
   const passHash = await bcrypt.hash(passphrase, 10);
   const user = await prisma.user.create({
     data: { username, passHash },
-    select: { id: true, username: true },
+    select: { id: true, username: true, tokenVersion: true },
   });
 
   const res = NextResponse.json({ username: user.username }, { status: 201 });
-  res.cookies.set(USER_COOKIE, signSession(user.id), {
+  res.cookies.set(USER_COOKIE, await signSession(user.id, user.tokenVersion), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: USER_COOKIE_MAX_AGE,
   });
   return res;
 }
