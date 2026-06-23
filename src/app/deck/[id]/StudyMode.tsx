@@ -46,6 +46,7 @@ export default function StudyMode({
   isLoggedIn,
   initialSelected,
   autoTest,
+  autoStudy,
 }: {
   cards: Card[];
   isAdmin: boolean;
@@ -53,6 +54,7 @@ export default function StudyMode({
   isLoggedIn: boolean;
   initialSelected?: number[];
   autoTest?: boolean;
+  autoStudy?: boolean;
 }) {
   const router = useRouter();
   const { t } = useLang();
@@ -173,6 +175,19 @@ export default function StudyMode({
     setResults([]);
     setIsRetake(true);
     setTesting(true);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // opened from a saved test in study mode: scope flashcards to those cards,
+  // but don't start the quiz
+  useEffect(() => {
+    if (!autoStudy || !initialSelected?.length) return;
+    const set = new Set(initialSelected);
+    const subset = initialCards.filter((c) => set.has(c.id));
+    if (subset.length === 0) return;
+    setSelectedIds(set);
+    setSelectedOnly(true);
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

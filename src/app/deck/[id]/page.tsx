@@ -12,7 +12,7 @@ export default async function DeckPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ test?: string }>;
+  searchParams: Promise<{ test?: string; mode?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -33,6 +33,7 @@ export default async function DeckPage({
   // opened from a saved test? load that user's picked card ids
   let initialSelected: number[] | undefined;
   let autoTest = false;
+  let autoStudy = false;
   const testId = Number(sp?.test);
   if (user && Number.isInteger(testId)) {
     const saved = await prisma.savedTest.findFirst({
@@ -41,7 +42,9 @@ export default async function DeckPage({
     if (saved) {
       try {
         initialSelected = JSON.parse(saved.cardIds) as number[];
-        autoTest = true;
+        // mode=study → flashcards scoped to the test; otherwise auto-start quiz
+        if (sp?.mode === "study") autoStudy = true;
+        else autoTest = true;
       } catch {}
     }
   }
@@ -65,6 +68,7 @@ export default async function DeckPage({
           isLoggedIn={!!user}
           initialSelected={initialSelected}
           autoTest={autoTest}
+          autoStudy={autoStudy}
         />
       )}
     </main>

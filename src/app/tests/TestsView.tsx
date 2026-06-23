@@ -76,6 +76,12 @@ export default function TestsView({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Link
+                  href={`/deck/${test.deckId}?test=${test.id}&mode=study`}
+                  className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                >
+                  {t("studyTest")}
+                </Link>
+                <Link
                   href={`/deck/${test.deckId}?test=${test.id}`}
                   className="rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:opacity-90 active:scale-95"
                 >
